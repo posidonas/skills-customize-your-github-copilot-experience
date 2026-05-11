@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API Consumers with JavaScript</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 24px;
+      line-height: 1.5;
+    }
+    button {
+      margin: 8px 0;
+      padding: 10px 16px;
+      font-size: 1rem;
+    }
+    .output {
+      margin-top: 16px;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #f9f9f9;
+    }
+    .error {
+      color: #b00020;
+    }
+    label {
+      display: block;
+      margin: 10px 0 4px;
+    }
+    input, textarea {
+      width: 100%;
+      max-width: 420px;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <h1>API Consumers with JavaScript</h1>
+  <p>Use this starter page to fetch data from a REST API and display the results in the browser.</p>
+
+  <button id="load-user">Load User</button>
+  <button id="load-tasks">Load Tasks</button>
+
+  <div class="output" id="api-output">
+    <p>Click a button to start an API request.</p>
+  </div>
+
+  <h2>Create a New Task</h2>
+  <form id="task-form">
+    <label for="task-title">Task title</label>
+    <input id="task-title" name="title" type="text" placeholder="Enter a task title" required />
+
+    <label for="task-description">Task description</label>
+    <textarea id="task-description" name="description" rows="4" placeholder="Enter a task description"></textarea>
+
+    <button type="submit">Submit Task</button>
+  </form>
+
+  <script>
+    const output = document.getElementById('api-output');
+    const loadUserBtn = document.getElementById('load-user');
+    const loadTasksBtn = document.getElementById('load-tasks');
+    const taskForm = document.getElementById('task-form');
+
+    const apiBaseUrl = 'http://localhost:8000';
+
+    function showMessage(message, isError = false) {
+      output.innerHTML = `<p${isError ? ' class="error"' : ''}>${message}</p>`;
+    }
+
+    function renderJson(data) {
+      output.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+    }
+
+    async function fetchUser() {
+      showMessage('Loading user...');
+      try {
+        const response = await fetch(`${apiBaseUrl}/api/users/1`);
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+        const user = await response.json();
+        output.innerHTML = `
+          <h3>User Information</h3>
+          <p><strong>ID:</strong> ${user.user_id}</p>
+          <p><strong>Name:</strong> ${user.name}</p>
+          <p><strong>Email:</strong> ${user.email}</p>
+        `;
+      } catch (error) {
+        showMessage(`Error loading user: ${error.message}`, true);
+      }
+    }
+
+    async function loadTasks() {
+      showMessage('Loading tasks...');
+      try {
+        const response = await fetch(`${apiBaseUrl}/api/tasks`);
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+        const tasks = await response.json();
+
+        if (!Array.isArray(tasks) || tasks.length === 0) {
+          showMessage('No tasks found.');
+          return;
+        }
+
+        output.innerHTML = '<h3>Task List</h3>' +
+          tasks.map(task => `
+            <div>
+              <p><strong>Title:</strong> ${task.title}</p>
+              <p><strong>Description:</strong> ${task.description || 'No description'}</p>
+            </div>
+            <hr />
+          `).join('');
+      } catch (error) {
+        showMessage(`Error loading tasks: ${error.message}`, true);
+      }
+    }
+
+    async function createTask(event) {
+      event.preventDefault();
+      const title = document.getElementById('task-title').value.trim();
+      const description = document.getElementById('task-description').value.trim();
+
+      if (!title) {
+        showMessage('Please enter a title for the task.', true);
+        return;
+      }
+
+      showMessage('Submitting task...');
+      try {
+        const response = await fetch(`${apiBaseUrl}/api/tasks`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ title, description })
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.detail || 'Failed to create task');
+        }
+
+        output.innerHTML = '<h3>Task Submitted</h3>' +
+          `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+        taskForm.reset();
+      } catch (error) {
+        showMessage(`Error submitting task: ${error.message}`, true);
+      }
+    }
+
+    loadUserBtn.addEventListener('click', fetchUser);
+    loadTasksBtn.addEventListener('click', loadTasks);
+    taskForm.addEventListener('submit', createTask);
+  </script>
+</body>
+</html>

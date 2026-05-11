@@ -72,6 +72,20 @@
           "type": "python"
         }
       ]
+    },
+    {
+      "id": "api-consumers",
+      "title": "API Consumers with JavaScript",
+      "description": "Use JavaScript to fetch data from a REST API and display dynamic content in a web page.",
+      "path": "assignments/api-consumers",
+      "dueDate": "2026-05-29",
+      "attachments": [
+        {
+          "name": "Starter Code",
+          "file": "starter-code.html",
+          "type": "html"
+        }
+      ]
     }
   ]
 }
